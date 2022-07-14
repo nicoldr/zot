@@ -140,7 +140,7 @@ func (rh *RouteHandler) CheckVersionSupport(response http.ResponseWriter, reques
 	response.Header().Set(constants.DistAPIVersion, "registry/2.0")
 	// NOTE: compatibility workaround - return this header in "allowed-read" mode to allow for clients to
 	// work correctly
-	if rh.c.Config.HTTP.AllowReadAccess {
+	if checkAnonymousPolicyExists(rh.c.Config.AccessControl) {
 		if rh.c.Config.HTTP.Auth != nil {
 			if rh.c.Config.HTTP.Auth.Bearer != nil {
 				response.Header().Set("WWW-Authenticate", fmt.Sprintf("bearer realm=%s", rh.c.Config.HTTP.Auth.Bearer.Realm))
