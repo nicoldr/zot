@@ -193,7 +193,7 @@ func basicAuthHandler(ctlr *Controller) mux.MiddlewareFunc {
 				if request.TLS.VerifiedChains != nil && checkAnonymousPolicyExists(ctlr.Config.AccessControl) {
 					// Process request
 					next.ServeHTTP(response, request)
-	
+
 					return
 				}
 

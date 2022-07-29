@@ -971,7 +971,7 @@ func TestTLSWithBasicAuthAllowReadAccess(t *testing.T) {
 	})
 }
 
-func TestTLSWithDefaultUserPermission(t *testing.T) {
+func TestTLSWithUserPermissions(t *testing.T) {
 	Convey("Make a new controller", t, func() {
 		caCert, err := ioutil.ReadFile(CACert)
 		So(err, ShouldBeNil)
@@ -1051,7 +1051,6 @@ func TestTLSWithDefaultUserPermission(t *testing.T) {
 		resp, err = resty.R().Post(secureBaseURL + "/v2/repo/blobs/uploads/")
 		So(err, ShouldBeNil)
 		So(resp.StatusCode(), ShouldEqual, http.StatusAccepted)
-
 	})
 }
 

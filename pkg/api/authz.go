@@ -193,25 +193,27 @@ func AuthzHandler(ctlr *Controller) mux.MiddlewareFunc {
 			var err error
 
 			// allow anonymous authz if no authn present and only default policies are present
-            username = ""
-            if isAuthnEnabled(ctlr.Config) && request.Header.Get("Authorization") != "" {
-                username, _, err = getUsernamePasswordBasicAuth(request)
-                // no tls mutual auth
-                if err != nil && request.TLS.VerifiedChains == nil {
-                    authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
-                }
-            }
-            
-            // still no username, get it from tls certs
-            if username == "" && request.TLS.VerifiedChains != nil {
-                for _, cert := range request.TLS.PeerCertificates {
-                    username = cert.Subject.CommonName
-                }
-            }
-            // if we still don't have a username and anon policy is not present
-            if username == "" && !checkAnonymousPolicyExists(ctlr.Config.AccessControl) {
-                authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
-            }
+			username = ""
+			if isAuthnEnabled(ctlr.Config) && request.Header.Get("Authorization") != "" {
+				username, _, err = getUsernamePasswordBasicAuth(request)
+				// no tls mutual auth
+				if err != nil && request.TLS.VerifiedChains == nil {
+					authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
+				}
+			}
+
+			// still no username, get it from tls certs
+			verifiedChains := request.TLS.VerifiedChains
+			if username == "" && verifiedChains != nil &&
+				len(verifiedChains) > 0 && len(verifiedChains[0]) > 0 {
+				for _, cert := range request.TLS.PeerCertificates {
+					username = cert.Subject.CommonName
+				}
+			}
+			// if we still don't have a username and anon policy is not present
+			if username == "" && !checkAnonymousPolicyExists(ctlr.Config.AccessControl) {
+				authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
+			}
 
 			ctx := acCtrlr.getContext(username, request)
 
