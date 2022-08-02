@@ -9,7 +9,14 @@
     "realm": "zot",
     "tls": {
       "cert": "test/data/server.cert",
-      "key": "test/data/server.key"
+      "key": "test/data/server.key",
+      "cacert": "test/data/ca.crt"
+    },
+    "accessControl": {
+      "**": {
+        "anonymousPolicy": ["read"],
+        "defaultPolicy": ["read"]
+      }
     }
   },
   "log": {

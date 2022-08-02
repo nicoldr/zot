@@ -425,7 +425,7 @@ func doesAuthzContainOnlyAnonymousPolicies(cfg *config.Config) bool {
 	}
 
 	for _, repository := range cfg.AccessControl.Repositories {
-		if len(repository.DefaultPolicy) > 0 {
+		if len(repository.DefaultPolicy) > 0 && cfg.HTTP.TLS == nil {
 			log.Info().Interface("repository", repository).
 				Msg("default policy detected, anonymous authorization is not the only authorization policy configured")
 
