@@ -192,16 +192,27 @@ func AuthzHandler(ctlr *Controller) mux.MiddlewareFunc {
 			var username string
 			var err error
 
-			/* To be implemented: verify client certs and get its username(subject DN)
-			if request.TLS.VerifiedChains != nil, then get subject DN
-			issue: https: //github.com/project-zot/zot/issues/614 */
-
+			// allow anonymous authz if no authn present and only default policies are present
+			username = ""
 			if isAuthnEnabled(ctlr.Config) && request.Header.Get("Authorization") != "" {
 				username, _, err = getUsernamePasswordBasicAuth(request)
-
-				if err != nil {
+				// no TLS mutual auth
+				if err != nil && request.TLS.VerifiedChains == nil {
 					authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
 				}
+			}
+
+			// still no identity, get  it from TLS certs
+			verifiedChains := request.TLS.VerifiedChains
+			if username == "" && verifiedChains != nil &&
+				len(verifiedChains) > 0 && len(verifiedChains[0]) > 0 {
+				for _, cert := range request.TLS.PeerCertificates {
+					username = cert.Subject.CommonName
+				}
+			}
+			// if we still don't have an identity and anonymous policy is not present
+			if username == "" && !anonymousPolicyExists(ctlr.Config.AccessControl) {
+				authFail(response, ctlr.Config.HTTP.Realm, ctlr.Config.HTTP.Auth.FailDelay)
 			}
 
 			ctx := acCtrlr.getContext(username, request)

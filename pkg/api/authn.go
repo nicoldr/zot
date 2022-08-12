@@ -190,6 +190,13 @@ func basicAuthHandler(ctlr *Controller) mux.MiddlewareFunc {
 
 			username, passphrase, err := getUsernamePasswordBasicAuth(request)
 			if err != nil {
+				if request.TLS.VerifiedChains != nil && anonymousPolicyExists(ctlr.Config.AccessControl) {
+					// Process request
+					next.ServeHTTP(response, request)
+
+					return
+				}
+
 				ctlr.Log.Error().Err(err).Msg("failed to parse authorization header")
 				authFail(response, realm, delay)
 
