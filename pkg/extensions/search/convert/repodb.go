@@ -315,7 +315,7 @@ func RepoMeta2ExpandedRepoInfo(ctx context.Context, repoMeta repodb.RepoMetadata
 		repoDownloadCount        = 0
 		repoName                 = repoMeta.Name
 
-		// map used to keep track of all blobs of a repo without dublicates as
+		// map used to keep track of all blobs of a repo without duplicates as
 		// some images may have the same layers
 		repoBlob2Size = make(map[string]int64, 10)
 
