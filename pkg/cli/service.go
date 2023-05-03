@@ -994,86 +994,87 @@ func (cve cveResult) stringYAML() (string, error) {
 type fixedTags struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"ImageListWithCVEFixed"` //nolint:tagliatelle // graphQL schema
+		common.PaginatedImagesResult `json:"ImageListWithCVEFixed"` //nolint:tagliatelle // graphQL schema
 	} `json:"data"`
 }
 
 type imagesForCve struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle // graphQL schema
+		common.PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle // graphQL schema
 	} `json:"data"`
 }
 
-type PaginatedImagesResult struct {
-	Results []imageStruct `json:"results"`
-}
+// type PaginatedImagesResult struct {
+// 	Results []imageStruct `json:"results"`
+// }
 
-type imageStruct struct {
-	RepoName  string `json:"repoName"`
-	Tag       string `json:"tag"`
-	Manifests []manifestStruct
-	Size      string `json:"size"`
-	Digest    string `json:"digest"`
-	MediaType string `json:"mediaType"`
-	IsSigned  bool   `json:"isSigned"`
-	verbose   bool
-}
+// type imageStruct struct {
+// 	RepoName  string `json:"repoName"`
+// 	Tag       string `json:"tag"`
+// 	Manifests []manifestStruct
+// 	Size      string `json:"size"`
+// 	Digest    string `json:"digest"`
+// 	MediaType string `json:"mediaType"`
+// 	IsSigned  bool   `json:"isSigned"`
+// }
 
-type manifestStruct struct {
-	ConfigDigest string   `json:"configDigest"`
-	Digest       string   `json:"digest"`
-	Layers       []layer  `json:"layers"`
-	Platform     platform `json:"platform"`
-	Size         string   `json:"size"`
-	IsSigned     bool     `json:"isSigned"`
-}
 
-type platform struct {
-	Os      string `json:"os"`
-	Arch    string `json:"arch"`
-	Variant string `json:"variant"`
-}
+
+// type manifestStruct struct {
+// 	ConfigDigest string   `json:"configDigest"`
+// 	Digest       string   `json:"digest"`
+// 	Layers       []layer  `json:"layers"`
+// 	Platform     platform `json:"platform"`
+// 	Size         string   `json:"size"`
+// 	IsSigned     bool     `json:"isSigned"`
+// }
+
+// type platform struct {
+// 	Os      string `json:"os"`
+// 	Arch    string `json:"arch"`
+// 	Variant string `json:"variant"`
+// }
 
 type DerivedImageList struct {
-	Results []imageStruct `json:"results"`
+	Results []common.ImageSummary `json:"results"`
 }
 type BaseImageList struct {
-	Results []imageStruct `json:"results"`
+	Results [][]common.ImageSummary `json:"results"`
 }
 
 type imageListStructGQL struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"ImageList"` //nolint:tagliatelle
+		common.PaginatedImagesResult `json:"ImageList"` //nolint:tagliatelle
 	} `json:"data"`
 }
 
 type imageListStructForDigestGQL struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"ImageListForDigest"` //nolint:tagliatelle
+		common.PaginatedImagesResult `json:"ImageListForDigest"` //nolint:tagliatelle
 	} `json:"data"`
 }
 
 type imageListStructForDerivedImagesGQL struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"DerivedImageList"` //nolint:tagliatelle
+		common.PaginatedImagesResult `json:"DerivedImageList"` //nolint:tagliatelle
 	} `json:"data"`
 }
 
 type imageListStructForBaseImagesGQL struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"BaseImageList"` //nolint:tagliatelle
+		common.PaginatedImagesResult `json:"BaseImageList"` //nolint:tagliatelle
 	} `json:"data"`
 }
 
 type imagesForDigest struct {
 	Errors []common.ErrorGraphQL `json:"errors"`
 	Data   struct {
-		PaginatedImagesResult `json:"ImageListForDigest"` //nolint:tagliatelle // graphQL schema
+		common.PaginatedImagesResult `json:"ImageListForDigest"` //nolint:tagliatelle // graphQL schema
 	} `json:"data"`
 }
 
@@ -1082,10 +1083,12 @@ type layer struct {
 	Digest string `json:"digest"`
 }
 
-func (img imageStruct) string(format string, maxImgNameLen, maxTagLen, maxPlatformLen int) (string, error) {
+type imageStruct common.ImageSummary
+
+func (img imageStruct) string(format string, maxImgNameLen, maxTagLen, maxPlatformLen int, verbose bool) (string, error) { //nolint: lll
 	switch strings.ToLower(format) {
 	case "", defaultOutoutFormat:
-		return img.stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen)
+		return img.stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen, verbose)
 	case "json":
 		return img.stringJSON()
 	case "yml", "yaml":
@@ -1095,7 +1098,7 @@ func (img imageStruct) string(format string, maxImgNameLen, maxTagLen, maxPlatfo
 	}
 }
 
-func (img imageStruct) stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen int) (string, error) {
+func (img imageStruct) stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen int, verbose bool) (string, error) {
 	var builder strings.Builder
 
 	table := getImageTableWriter(&builder)
@@ -1107,7 +1110,7 @@ func (img imageStruct) stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen 
 	table.SetColMinWidth(colSizeIndex, sizeWidth)
 	table.SetColMinWidth(colIsSignedIndex, isSignedWidth)
 
-	if img.verbose {
+	if verbose {
 		table.SetColMinWidth(colConfigIndex, configWidth)
 		table.SetColMinWidth(colLayersIndex, layersWidth)
 	}
@@ -1138,7 +1141,7 @@ func (img imageStruct) stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen 
 		tagName += offset
 	}
 
-	err := addImageToTable(table, &img, maxPlatformLen, imageName, tagName)
+	err := addImageToTable(table, &img, maxPlatformLen, imageName, tagName, verbose)
 	if err != nil {
 		return "", err
 	}
@@ -1149,20 +1152,20 @@ func (img imageStruct) stringPlainText(maxImgNameLen, maxTagLen, maxPlatformLen 
 }
 
 func addImageToTable(table *tablewriter.Table, img *imageStruct, maxPlatformLen int,
-	imageName, tagName string,
+	imageName, tagName string, verbose bool,
 ) error {
 	switch img.MediaType {
 	case ispec.MediaTypeImageManifest:
-		return addManifestToTable(table, imageName, tagName, &img.Manifests[0], maxPlatformLen, img.verbose)
+		return addManifestToTable(table, imageName, tagName, &img.Manifests[0], maxPlatformLen, verbose)
 	case ispec.MediaTypeImageIndex:
-		return addImageIndexToTable(table, img, maxPlatformLen, imageName, tagName)
+		return addImageIndexToTable(table, img, maxPlatformLen, imageName, tagName, verbose)
 	}
 
 	return nil
 }
 
 func addImageIndexToTable(table *tablewriter.Table, img *imageStruct, maxPlatformLen int,
-	imageName, tagName string,
+	imageName, tagName string, verbose bool,
 ) error {
 	indexDigest, err := godigest.Parse(img.Digest)
 	if err != nil {
@@ -1178,7 +1181,7 @@ func addImageIndexToTable(table *tablewriter.Table, img *imageStruct, maxPlatfor
 	row[colSizeIndex] = ellipsize(strings.ReplaceAll(humanize.Bytes(imgSize), " ", ""), sizeWidth, ellipsis)
 	row[colIsSignedIndex] = strconv.FormatBool(img.IsSigned)
 
-	if img.verbose {
+	if verbose {
 		row[colConfigIndex] = ""
 		row[colLayersIndex] = ""
 	}
@@ -1186,7 +1189,7 @@ func addImageIndexToTable(table *tablewriter.Table, img *imageStruct, maxPlatfor
 	table.Append(row)
 
 	for i := range img.Manifests {
-		err := addManifestToTable(table, "", "", &img.Manifests[i], maxPlatformLen, img.verbose)
+		err := addManifestToTable(table, "", "", &img.Manifests[i], maxPlatformLen, verbose)
 		if err != nil {
 			return err
 		}
@@ -1195,7 +1198,7 @@ func addImageIndexToTable(table *tablewriter.Table, img *imageStruct, maxPlatfor
 	return nil
 }
 
-func addManifestToTable(table *tablewriter.Table, imageName, tagName string, manifest *manifestStruct,
+func addManifestToTable(table *tablewriter.Table, imageName, tagName string, manifest *common.ManifestSummary,
 	maxPlatformLen int, verbose bool,
 ) error {
 	manifestDigest, err := godigest.Parse(manifest.Digest)
@@ -1239,7 +1242,7 @@ func addManifestToTable(table *tablewriter.Table, imageName, tagName string, man
 	if verbose {
 		for _, entry := range manifest.Layers {
 			layerSize := entry.Size
-			size := ellipsize(strings.ReplaceAll(humanize.Bytes(uint64(layerSize)), " ", ""), sizeWidth, ellipsis)
+			size := ellipsize(strings.ReplaceAll(layerSize , " ", ""), sizeWidth, ellipsis)
 
 			layerDigest, err := godigest.Parse(entry.Digest)
 			if err != nil {
@@ -1264,7 +1267,7 @@ func addManifestToTable(table *tablewriter.Table, imageName, tagName string, man
 	return nil
 }
 
-func getPlatformStr(platf platform) string {
+func getPlatformStr(platf common.Platform) string {
 	if platf.Arch == "" && platf.Os == "" {
 		return ""
 	}

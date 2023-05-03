@@ -21,6 +21,10 @@ type RepoSummary struct {
 	NewestImage  ImageSummary `json:"newestImage"`
 }
 
+type PaginatedImagesResult struct {
+	Results []ImageSummary `json:"results"`
+}
+
 type ImageSummary struct {
 	RepoName        string                    `json:"repoName"`
 	Tag             string                    `json:"tag"`
@@ -49,6 +53,7 @@ type ManifestSummary struct {
 	LastUpdated     time.Time                 `json:"lastUpdated"`
 	Size            string                    `json:"size"`
 	Platform        Platform                  `json:"platform"`
+	IsSigned        bool   					  `json:"isSigned"`
 	DownloadCount   int                       `json:"downloadCount"`
 	Layers          []LayerSummary            `json:"layers"`
 	History         []LayerHistory            `json:"history"`
@@ -56,8 +61,9 @@ type ManifestSummary struct {
 }
 
 type Platform struct {
-	Os   string `json:"os"`
-	Arch string `json:"arch"`
+	Os      string `json:"os"`
+	Arch    string `json:"arch"`
+	Variant string `json:"variant"`
 }
 
 type ErrorGraphQL struct {

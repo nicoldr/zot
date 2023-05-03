@@ -188,7 +188,7 @@ func getImages(config searchConfig) error {
 		return err
 	}
 
-	return printResult(config, imageList.Data.Results)
+	return printResult(config, imageList.Data.PaginatedImagesResult)
 }
 
 type imagesByDigestSearcher struct{}
@@ -798,9 +798,9 @@ func printResult(config searchConfig, imageList []imageStruct) error {
 
 	for i := range imageList {
 		img := imageList[i]
-		img.verbose = *config.verbose
+		verbose := *config.verbose
 
-		out, err := img.string(*config.outputFormat, maxImgNameLen, maxTagLen, maxPlatformLen)
+		out, err := img.string(*config.outputFormat, maxImgNameLen, maxTagLen, maxPlatformLen, verbose)
 		if err != nil {
 			return err
 		}

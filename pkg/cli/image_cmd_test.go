@@ -31,6 +31,7 @@ import (
 	"zotregistry.io/zot/pkg/api/config"
 	extconf "zotregistry.io/zot/pkg/extensions/config"
 	"zotregistry.io/zot/pkg/test"
+	"zotregistry.io/zot/pkg/common"
 )
 
 func TestSearchImageCmd(t *testing.T) {
@@ -1798,7 +1799,7 @@ func (service mockService) getImagesByCveIDGQL(ctx context.Context, config searc
 	imagesForCve := &imagesForCve{
 		Errors: nil,
 		Data: struct {
-			PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle
+			common.PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle
 		}{},
 	}
 
@@ -1816,7 +1817,7 @@ func (service mockService) getTagsForCVEGQL(ctx context.Context, config searchCo
 	images := &imagesForCve{
 		Errors: nil,
 		Data: struct {
-			PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle // graphQL schema
+			common.PaginatedImagesResult `json:"ImageListForCVE"` //nolint:tagliatelle // graphQL schema
 		}{},
 	}
 
@@ -1834,7 +1835,7 @@ func (service mockService) getFixedTagsForCVEGQL(ctx context.Context, config sea
 	fixedTags := &fixedTags{
 		Errors: nil,
 		Data: struct {
-			PaginatedImagesResult `json:"ImageListWithCVEFixed"` //nolint:tagliatelle // graphQL schema
+			common.PaginatedImagesResult `json:"ImageListWithCVEFixed"` //nolint:tagliatelle // graphQL schema
 		}{},
 	}
 
@@ -1879,11 +1880,11 @@ func (service mockService) getMockedImageByName(imageName string) imageStruct {
 	image := imageStruct{}
 	image.RepoName = imageName
 	image.Tag = "tag"
-	image.Manifests = []manifestStruct{
+	image.Manifests = []common.ManifestSummary{
 		{
 			Digest:       godigest.FromString("Digest").String(),
 			ConfigDigest: godigest.FromString("ConfigDigest").String(),
-			Layers:       []layer{{Digest: godigest.FromString("LayerDigest").String()}},
+			Layers:       []common.LayerSummary{{Digest: godigest.FromString("LayerDigest").String()}},
 			Size:         "123445",
 		},
 	}
@@ -1903,18 +1904,18 @@ func (service mockService) getAllImages(ctx context.Context, config searchConfig
 	image.Tag = "tag"
 	image.Digest = godigest.FromString("test").String()
 	image.MediaType = ispec.MediaTypeImageManifest
-	image.Manifests = []manifestStruct{
+	image.Manifests = []common.ManifestSummary{
 		{
 			Digest:       godigest.FromString("Digest").String(),
 			ConfigDigest: godigest.FromString("ConfigDigest").String(),
-			Layers:       []layer{{Digest: godigest.FromString("LayerDigest").String()}},
+			Layers:       []common.LayerSummary{{Digest: godigest.FromString("LayerDigest").String()}},
 			Size:         "123445",
-			Platform:     platform{Os: "os", Arch: "arch"},
+			Platform:     common.Platform{Os: "os", Arch: "arch"},
 		},
 	}
 	image.Size = "123445"
 
-	str, err := image.string(*config.outputFormat, len(image.RepoName), len(image.Tag), len("os/Arch"))
+	str, err := image.string(*config.outputFormat, len(image.RepoName), len(image.Tag), len("os/Arch"), *config.verbose)
 	if err != nil {
 		channel <- stringResult{"", err}
 
@@ -1935,18 +1936,18 @@ func (service mockService) getImageByName(ctx context.Context, config searchConf
 	image.Tag = "tag"
 	image.Digest = godigest.FromString("test").String()
 	image.MediaType = ispec.MediaTypeImageManifest
-	image.Manifests = []manifestStruct{
+	image.Manifests = []common.ManifestSummary{
 		{
 			Digest:       godigest.FromString("Digest").String(),
 			ConfigDigest: godigest.FromString("ConfigDigest").String(),
-			Layers:       []layer{{Digest: godigest.FromString("LayerDigest").String()}},
+			Layers:       []common.LayerSummary{{Digest: godigest.FromString("LayerDigest").String()}},
 			Size:         "123445",
-			Platform:     platform{Os: "os", Arch: "arch"},
+			Platform:     common.Platform{Os: "os", Arch: "arch"},
 		},
 	}
 	image.Size = "123445"
 
-	str, err := image.string(*config.outputFormat, len(image.RepoName), len(image.Tag), len("os/Arch"))
+	str, err := image.string(*config.outputFormat, len(image.RepoName), len(image.Tag), len("os/Arch"), *config.verbose)
 	if err != nil {
 		channel <- stringResult{"", err}
 
